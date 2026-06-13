@@ -1,0 +1,53 @@
+services:
+  payguard-db:
+    image: mysql:8.0
+    container_name: payguard-db
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: payguard_core
+      MYSQL_USER: payguard_user
+      MYSQL_PASSWORD: payguard_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - payguard-network
+
+  payguard-cache:
+    image: redis:7.0-alpine
+    container_name: payguard-cache
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - payguard-network
+
+  payguard-broker:
+    image: rabbitmq:3.11-management-alpine
+    container_name: payguard-broker
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "check_running"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+    networks:
+      - payguard-network
+
+volumes:
+  mysql_data:
+  redis_data:
+  rabbitmq_data:
+
+networks:
+  payguard-network:
+    driver: bridge
