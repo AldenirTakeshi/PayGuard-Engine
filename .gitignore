@@ -1,3 +1,11 @@
-.idea
-.target
-.env
+# IntelliJ IDEA
+.idea/
+*.iml
+
+# Maven (Código compilado)
+target/
+**/target/
+
+# Arquivos de sistema e logs
+*.log
+.DS_Store
