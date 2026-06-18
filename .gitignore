@@ -9,3 +9,5 @@ target/
 # Arquivos de sistema e logs
 *.log
 .DS_Store
+
+.env
