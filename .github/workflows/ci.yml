@@ -2,7 +2,7 @@ name: PayGuard Engine - CI Pipeline
 
 on:
   push:
-    branch: ["main"]
+    branches: ["main"]
   pull_request:
     branches: ["main"]
 
