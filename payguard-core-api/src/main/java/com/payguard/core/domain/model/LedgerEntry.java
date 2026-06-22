@@ -33,6 +33,9 @@ public class LedgerEntry {
     @Column(length = 255)
     private String description;
 
+    @Column(name = "transaction_ref", length = 255)
+    private String transactionRef;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

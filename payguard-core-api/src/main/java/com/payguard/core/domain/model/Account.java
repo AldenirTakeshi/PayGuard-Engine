@@ -26,11 +26,17 @@ public class Account {
     @Column(name = "holder_name", nullable = false, length = 100)
     private String holderName;
 
+    @Column(nullable = false, precision = 19, scale = 4)
+    private BigDecimal balance;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
+        if(this.balance == null){
+            this.balance = BigDecimal.ZERO;
+        }
     }
 }
