@@ -1,5 +1,6 @@
 package com.payguard.core.domain.service;
 
+import com.payguard.core.domain.exception.SaldoInsuficienteException;
 import com.payguard.core.domain.model.LedgerEntry;
 import com.payguard.core.domain.model.enums.TransactionType;
 import com.payguard.core.domain.repository.LedgerEntryRepository;
@@ -26,7 +27,7 @@ public class LedgerService {
             BigDecimal saldoAtual = this.obterSaldo(lancamento.getAccountId());
 
             if (saldoAtual.compareTo(lancamento.getAmount()) < 0) {
-                throw new IllegalArgumentException("Saldo insuficiente para realizar esta transação.");
+                throw new SaldoInsuficienteException("Saldo insuficiente para realizar esta transação.");
             }
         }
 

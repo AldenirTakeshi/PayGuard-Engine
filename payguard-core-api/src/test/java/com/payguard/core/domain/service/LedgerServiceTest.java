@@ -1,5 +1,6 @@
 package com.payguard.core.domain.service;
 
+import com.payguard.core.domain.exception.SaldoInsuficienteException;
 import com.payguard.core.domain.model.LedgerEntry;
 import com.payguard.core.domain.model.enums.TransactionType;
 import com.payguard.core.domain.repository.LedgerEntryRepository;
@@ -54,7 +55,7 @@ public class LedgerServiceTest {
                 .description("Tentativa de saque ou compra")
                 .build();
 
-        assertThrows(IllegalArgumentException.class, () -> {
+        assertThrows(SaldoInsuficienteException.class, () -> {
             ledgerService.criarLancamento(lancamentoDebito);
         });
 
