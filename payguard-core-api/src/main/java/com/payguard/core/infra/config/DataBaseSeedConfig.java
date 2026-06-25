@@ -27,7 +27,6 @@ public class DataBaseSeedConfig implements CommandLineRunner {
         if (ledgerEntryRepository.count() == 0) {
             System.out.println("Inicializando seed de dados para ambiente de desenvolvimento...");
 
-            // IDs fixos para facilitar seus testes manuais via Postman/Insomnia depois
             UUID contaCorrenteId = UUID.fromString("a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d");
             UUID contaPoupancaId = UUID.fromString("f6e5d4c3-b2a1-0f9e-8d7c-6b5a4f3e2d1c");
 

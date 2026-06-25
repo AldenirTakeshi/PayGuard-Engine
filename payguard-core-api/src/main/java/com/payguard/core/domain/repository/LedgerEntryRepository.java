@@ -15,10 +15,8 @@ public interface LedgerEntryRepository extends JpaRepository<LedgerEntry, UUID> 
 
     Optional<LedgerEntry> findByAccountId(UUID accountId);
     @Query("""
-        SELECT COALESCE(
-            SUM(CASE WHEN le.type = 'CREDIT' THEN le.amount ELSE -le.amount END), 
-            0.0000
-        )
+        SELECT 
+            SUM(CASE WHEN le.type = 'CREDIT' THEN le.amount ELSE -le.amount END)
         FROM LedgerEntry le
         WHERE le.accountId = :accountId
     """)
