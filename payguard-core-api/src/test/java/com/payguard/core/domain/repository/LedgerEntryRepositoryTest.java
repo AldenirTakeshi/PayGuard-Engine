@@ -2,6 +2,7 @@ package com.payguard.core.domain.repository;
 
 import com.payguard.core.domain.model.LedgerEntry;
 import com.payguard.core.domain.model.enums.TransactionType;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -11,6 +12,7 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
@@ -20,6 +22,7 @@ public class LedgerEntryRepositoryTest {
     private LedgerEntryRepository ledgerEntryRepository;
 
     @Test
+    @DisplayName("Deve calcular o saldo somando créditos e subtraindo débitos corretamente")
     void deveCalcularSaldoSomandoCreditosESubtraindoDebitos() {
         UUID accountId = UUID.randomUUID();
 
@@ -55,13 +58,12 @@ public class LedgerEntryRepositoryTest {
     }
 
     @Test
-    void deveRetornarZeroQuandoContaNaoPossuiLancamentos() {
+    @DisplayName("Deve retornar null quando a conta não possui nenhum lançamento (cenário do 404)")
+    void deveRetornarNullQuandoContaNaoPossuiLancamentos() {
         UUID accountIdSemLancamentos = UUID.randomUUID();
 
         BigDecimal saldoCalculado = ledgerEntryRepository.calculateBalanceByAccountId(accountIdSemLancamentos);
 
-        BigDecimal saldoEsperado = new BigDecimal("0.0000");
-        assertEquals(0, saldoEsperado.compareTo(saldoCalculado));
+        assertNull(saldoCalculado, "O saldo deveria ser nulo para uma conta inexistente!");
     }
-
 }
