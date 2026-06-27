@@ -1,5 +1,7 @@
 package com.payguard.core.infra.controller;
 
+import com.payguard.core.domain.model.Transaction;
+import com.payguard.core.domain.service.TransactionService;
 import com.payguard.core.infra.controller.dto.CreateTransactionRequest;
 import com.payguard.core.infra.controller.dto.TransactionResponse;
 import jakarta.validation.Valid;
@@ -15,12 +17,16 @@ import java.util.UUID;
 @RequestMapping("/api/v1/transactions")
 public class TransactionController {
 
+    private final TransactionService transactionService;
+
+    public TransactionController(TransactionService transactionService) {
+        this.transactionService = transactionService;
+    }
+
     @PostMapping
     public ResponseEntity<TransactionResponse> createTransaction(@Valid @RequestBody CreateTransactionRequest request){
+        Transaction transaction = transactionService.registerTransacaoInicial(request);
 
-        UUID mockTransactionId = UUID.randomUUID();
-        String status = "PROCESSING";
-
-        return ResponseEntity.accepted().body(new TransactionResponse(mockTransactionId, status));
+        return ResponseEntity.accepted().body(new TransactionResponse(transaction.getId(), transaction.getStatus().name()));
     }
 }
