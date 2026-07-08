@@ -23,9 +23,9 @@ public class TransactionController {
 
     @PostMapping
     public ResponseEntity<TransactionResponse> createTransaction(@Valid @RequestBody CreateTransactionRequest request){
-        Transaction transaction = transactionService.registerTransacaoInicial(request);
+        TransactionResponse response = transactionService.criarTransacao(request);
 
-        return ResponseEntity.accepted().body(new TransactionResponse(transaction.getId(), transaction.getStatus().name()));
+        return ResponseEntity.accepted().body(response);
     }
 
     @GetMapping("/{transactionId}")
