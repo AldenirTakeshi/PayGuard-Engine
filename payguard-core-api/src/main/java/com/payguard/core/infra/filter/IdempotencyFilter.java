@@ -4,6 +4,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.MDC;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 @Component
@@ -27,44 +29,54 @@ public class IdempotencyFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return ! "POST".equalsIgnoreCase(request.getMethod());
+        return !"POST".equalsIgnoreCase(request.getMethod());
     }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
-        String idempotencyKey = request.getHeader(IDEMPOTENCY_HEADER);
-
-        if (idempotencyKey == null || idempotencyKey.isBlank()) {
-            enviarErroHeaderAusente(response);
-            return;
+        String correlationId = request.getHeader("X-Correlation-ID");
+        if (correlationId == null || correlationId.isBlank()) {
+            correlationId = UUID.randomUUID().toString();
         }
-
-        String redisKey = REDIS_PREFIX + idempotencyKey;
-
-        Boolean chaveInseridaComSucesso = redisTemplate.opsForValue()
-                .setIfAbsent(redisKey, "PEDING",24, TimeUnit.HOURS);
-
-        if(Boolean.FALSE.equals(chaveInseridaComSucesso)){
-            String valorCacheado = redisTemplate.opsForValue().get(redisKey);
-
-            if("PEDING".equals(valorCacheado)){
-                enviarErroProcessamentoEmAndamento(response);
-            } else{
-                enviarRespostaCacheada(response, valorCacheado);
-            }
-            return;
-        }
+        MDC.put("correlationId", correlationId);
+        response.setHeader("X-Correlation-ID", correlationId);
 
         try {
-            filterChain.doFilter(request, response);
-        } catch (Exception ex){
-            redisTemplate.delete(redisKey);
-            throw ex;
-        }
+            String idempotencyKey = request.getHeader(IDEMPOTENCY_HEADER);
 
-        filterChain.doFilter(request, response);
+            if (idempotencyKey == null || idempotencyKey.isBlank()) {
+                enviarErroHeaderAusente(response);
+                return;
+            }
+
+            String redisKey = REDIS_PREFIX + idempotencyKey;
+
+            Boolean chaveInseridaComSucesso = redisTemplate.opsForValue()
+                    .setIfAbsent(redisKey, "PENDING", 24, TimeUnit.HOURS);
+
+            if (Boolean.FALSE.equals(chaveInseridaComSucesso)) {
+                String valorCacheado = redisTemplate.opsForValue().get(redisKey);
+
+                if ("PENDING".equals(valorCacheado)) {
+                    enviarErroProcessamentoEmAndamento(response);
+                } else {
+                    enviarRespostaCacheada(response, valorCacheado);
+                }
+                return;
+            }
+
+            try {
+                filterChain.doFilter(request, response);
+            } catch (Exception ex) {
+                redisTemplate.delete(redisKey);
+                throw ex;
+            }
+
+        } finally {
+            MDC.clear();
+        }
     }
 
     private void enviarErroHeaderAusente(HttpServletResponse response) throws IOException {
@@ -75,14 +87,14 @@ public class IdempotencyFilter extends OncePerRequestFilter {
     }
 
     private void enviarErroProcessamentoEmAndamento(HttpServletResponse response) throws IOException {
-        response.setStatus(HttpStatus.CONFLICT.value()); // 409 Conflict
+        response.setStatus(HttpStatus.CONFLICT.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");
         response.getWriter().write("{\"error\": \"Uma requisição com esta mesma chave de idempotência já está sendo processada.\"}");
     }
 
     private void enviarRespostaCacheada(HttpServletResponse response, String jsonCacheado) throws IOException {
-        response.setStatus(HttpStatus.OK.value()); // 200 OK
+        response.setStatus(HttpStatus.OK.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");
         response.getWriter().write(jsonCacheado);

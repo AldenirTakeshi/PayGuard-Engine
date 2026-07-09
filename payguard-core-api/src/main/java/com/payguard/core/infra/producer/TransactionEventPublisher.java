@@ -2,6 +2,7 @@ package com.payguard.core.infra.producer;
 
 import com.payguard.core.domain.event.TransactionCreatedEvent;
 import com.payguard.core.infra.config.RabbitMQConfig;
+import org.slf4j.MDC;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Component;
 
@@ -28,10 +29,16 @@ public class TransactionEventPublisher {
                 transaction.getCreatedAt()
         );
 
+        String currentCorrelationId = MDC.get("correlationId");
+
         rabbitTemplate.convertAndSend(
                 RabbitMQConfig.EXCHANGE_NAME,
                 RabbitMQConfig.ROUTING_KEY,
-                event
+                event,
+                message -> {
+                    message.getMessageProperties().setHeader("X-Correlation-ID", currentCorrelationId);
+                    return message;
+                }
         );
 
         System.out.println("[Evento Publicado] Transaction ID: " + transaction.getId());
